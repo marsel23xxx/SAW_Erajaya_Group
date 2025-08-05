@@ -381,24 +381,86 @@ public class PDFReportService {
     }
     
     // Helper methods
-    private void addReportHeader(Document document, String title) throws DocumentException {
-        // Company header
-        Paragraph company = new Paragraph("PT ERAJAYA", titleFont);
-        company.setAlignment(Element.ALIGN_CENTER);
-        document.add(company);
-        
-        Paragraph subtitle = new Paragraph("SISTEM DATA MINING - ANALISIS SAW", headerFont);
-        subtitle.setAlignment(Element.ALIGN_CENTER);
-        document.add(subtitle);
-        
-        // Title
+    private void addReportHeader(Document document, String title) throws DocumentException, IOException {
+        // BAGIAN ATAS - Logo dan Informasi Perusahaan
+        PdfPTable headerTable = new PdfPTable(2);
+        headerTable.setWidthPercentage(100);
+        headerTable.setWidths(new int[]{25, 75}); // Logo 25%, Info Perusahaan 75%
+
+        // Cell untuk logo (kiri)
+        PdfPCell logoCell = new PdfPCell();
+        logoCell.setBorder(Rectangle.NO_BORDER);
+        logoCell.setPadding(10);
+        logoCell.setVerticalAlignment(Element.ALIGN_TOP);
+
+        try {
+            // Path logo Erajaya
+            Image logo = Image.getInstance("./src/main/java/com/erajaya/datamining/image/erajaya_logo.png");
+            logo.scaleToFit(120, 120); // Ukuran logo
+            logo.setAlignment(Element.ALIGN_LEFT);
+            logoCell.addElement(logo);
+        } catch (Exception e) {
+            // Jika logo tidak ditemukan, tampilkan placeholder
+            Paragraph logoPlaceholder = new Paragraph("[LOGO ERAJAYA]", headerFont);
+            logoPlaceholder.setAlignment(Element.ALIGN_LEFT);
+            logoCell.addElement(logoPlaceholder);
+        }
+
+        // Cell untuk info perusahaan (kanan)
+        PdfPCell companyCell = new PdfPCell();
+        companyCell.setBorder(Rectangle.NO_BORDER);
+        companyCell.setPadding(10);
+        companyCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+
+        // Nama Perusahaan
+        Paragraph companyName = new Paragraph("PT ERAJAYA SWASEMBADA", titleFont);
+        companyName.setAlignment(Element.ALIGN_CENTER);
+        companyName.setSpacingAfter(8);
+        companyCell.addElement(companyName);
+
+        // Alamat Perusahaan
+        Paragraph address1 = new Paragraph("Hayam Wuruk Tower, 19th floor, Jalan Hayam Wuruk No. 108, Tamansari", normalFont);
+        address1.setAlignment(Element.ALIGN_CENTER);
+        address1.setSpacingAfter(3);
+        companyCell.addElement(address1);
+
+        Paragraph address2 = new Paragraph("RT.4/RW.9, Maphar, Kec. Taman Sari, Kota Jakarta Barat", normalFont);
+        address2.setAlignment(Element.ALIGN_CENTER);
+        address2.setSpacingAfter(3);
+        companyCell.addElement(address2);
+
+        Paragraph address3 = new Paragraph("Daerah Khusus Ibukota Jakarta 11240", normalFont);
+        address3.setAlignment(Element.ALIGN_CENTER);
+        companyCell.addElement(address3);
+
+        headerTable.addCell(logoCell);
+        headerTable.addCell(companyCell);
+        document.add(headerTable);
+
+        // Spacing setelah header table
+        document.add(new Paragraph(" ", normalFont));
+        document.add(new Paragraph(" ", normalFont));
+
+        // Garis Pemisah
+        document.add(new LineSeparator());
+        document.add(Chunk.NEWLINE);
+
+        // BAGIAN BAWAH - Judul Laporan dan Info
+
+        // Judul Laporan
         Paragraph titlePara = new Paragraph(title, titleFont);
         titlePara.setAlignment(Element.ALIGN_CENTER);
-        titlePara.setSpacingBefore(20);
-        titlePara.setSpacingAfter(20);
+        titlePara.setSpacingBefore(10);
+        titlePara.setSpacingAfter(15);
         document.add(titlePara);
-        
-        // Date and user
+
+        // Subtitle sistem
+        Paragraph subtitle = new Paragraph("SISTEM DATA MINING - ANALISIS SAW", headerFont);
+        subtitle.setAlignment(Element.ALIGN_CENTER);
+        subtitle.setSpacingAfter(20);
+        document.add(subtitle);
+
+        // Tanggal dan User
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy, HH:mm:ss");
         Paragraph info = new Paragraph(
             "Tanggal: " + sdf.format(new Date()) + " | " +
@@ -407,8 +469,8 @@ public class PDFReportService {
         info.setAlignment(Element.ALIGN_RIGHT);
         info.setSpacingAfter(20);
         document.add(info);
-        
-        // Horizontal line
+
+        // Garis bawah (opsional)
         document.add(new LineSeparator());
         document.add(Chunk.NEWLINE);
     }
@@ -443,13 +505,49 @@ public class PDFReportService {
     private void addFooter(Document document) throws DocumentException {
         document.add(Chunk.NEWLINE);
         document.add(new LineSeparator());
-        
+
+        // Footer info
         Paragraph footer = new Paragraph(
             "Laporan ini digenerate otomatis oleh Sistem Data Mining SAW PT Erajaya", 
             smallFont);
         footer.setAlignment(Element.ALIGN_CENTER);
         footer.setSpacingBefore(10);
+        footer.setSpacingAfter(20);
         document.add(footer);
+
+        // Tabel untuk tanda tangan
+        PdfPTable signatureTable = new PdfPTable(2);
+        signatureTable.setWidthPercentage(100);
+        signatureTable.setWidths(new int[]{50, 50}); // Bagi dua kolom sama rata
+
+        // Cell kosong kiri
+        PdfPCell leftCell = new PdfPCell();
+        leftCell.setBorder(Rectangle.NO_BORDER);
+        leftCell.addElement(new Paragraph(" ", normalFont)); // Kosong
+
+        // Cell tanda tangan kanan
+        PdfPCell rightCell = new PdfPCell();
+        rightCell.setBorder(Rectangle.NO_BORDER);
+        rightCell.setPadding(10);
+
+        Paragraph location = new Paragraph("Jakarta, Selasa 5 Agustus 2025", normalFont);
+        location.setAlignment(Element.ALIGN_CENTER);
+        rightCell.addElement(location);
+
+        Paragraph mengetahui = new Paragraph("Mengetahui", normalFont);
+        mengetahui.setAlignment(Element.ALIGN_CENTER);
+        mengetahui.setSpacingBefore(10);
+        mengetahui.setSpacingAfter(30); // Space untuk tanda tangan
+        rightCell.addElement(mengetahui);
+
+        // Garis untuk tanda tangan
+        Paragraph signatureLine = new Paragraph("(                                                    )", normalFont);
+        signatureLine.setAlignment(Element.ALIGN_CENTER);
+        rightCell.addElement(signatureLine);
+
+        signatureTable.addCell(leftCell);
+        signatureTable.addCell(rightCell);
+        document.add(signatureTable);
     }
     
     private String getAlternativeAnalysis(SAWResult result, int ranking) {
