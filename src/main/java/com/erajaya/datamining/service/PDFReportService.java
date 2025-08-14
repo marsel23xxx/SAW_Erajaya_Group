@@ -15,6 +15,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import java.time.LocalDate;
+import java.time.format.TextStyle;
+import java.util.Locale;
 /**
  * Service untuk generate laporan PDF
  */
@@ -48,12 +51,7 @@ public class PDFReportService {
             document.open();
             
             // Header
-            addReportHeader(document, "LAPORAN DATA ALTERNATIF PRODUK ELEKTRONIK");
-            
-            // Info
-            addParagraph(document, "Laporan ini berisi data lengkap alternatif produk elektronik yang tersedia " +
-                    "dalam sistem untuk analisis SAW.", normalFont);
-            document.add(Chunk.NEWLINE);
+            addReportHeader(document, "LAPORAN DATA ALTERNATIF PRODUK");            
             
             // Tabel data alternatif
             List<Alternative> alternatives = alternativeDAO.findAll();
@@ -63,7 +61,7 @@ public class PDFReportService {
             table.setWidths(new int[]{10, 15, 30, 20, 15, 15});
             
             // Header tabel
-            addTableHeader(table, new String[]{"Kode", "Nama Produk", "Deskripsi", "Harga", "Kualitas", "Suku Cadang"});
+            addTableHeader(table, new String[]{"Kode", "Produk", "Deskripsi", "Harga", "Kualitas", "Suku Cadang"});
             
             // Data
             for (Alternative alt : alternatives) {
@@ -454,25 +452,6 @@ public class PDFReportService {
         titlePara.setSpacingAfter(15);
         document.add(titlePara);
 
-        // Subtitle sistem
-        Paragraph subtitle = new Paragraph("SISTEM DATA MINING - ANALISIS SAW", headerFont);
-        subtitle.setAlignment(Element.ALIGN_CENTER);
-        subtitle.setSpacingAfter(20);
-        document.add(subtitle);
-
-        // Tanggal dan User
-        SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy, HH:mm:ss");
-        Paragraph info = new Paragraph(
-            "Tanggal: " + sdf.format(new Date()) + " | " +
-            "User: " + UserSession.getCurrentFullName(), 
-            smallFont);
-        info.setAlignment(Element.ALIGN_RIGHT);
-        info.setSpacingAfter(20);
-        document.add(info);
-
-        // Garis bawah (opsional)
-        document.add(new LineSeparator());
-        document.add(Chunk.NEWLINE);
     }
     
     private void addParagraph(Document document, String text, Font font) throws DocumentException {
@@ -505,42 +484,43 @@ public class PDFReportService {
     private void addFooter(Document document) throws DocumentException {
         document.add(Chunk.NEWLINE);
         document.add(new LineSeparator());
+       
+        // Ambil tanggal hari ini secara dinamis
+        LocalDate today = LocalDate.now();
+        Locale indonesia = new Locale("id", "ID");
 
-        // Footer info
-        Paragraph footer = new Paragraph(
-            "Laporan ini digenerate otomatis oleh Sistem Data Mining SAW PT Erajaya", 
-            smallFont);
-        footer.setAlignment(Element.ALIGN_CENTER);
-        footer.setSpacingBefore(10);
-        footer.setSpacingAfter(20);
-        document.add(footer);
+        String hari = today.getDayOfWeek().getDisplayName(TextStyle.FULL, indonesia); // Selasa
+        int tanggal = today.getDayOfMonth(); // 5
+        String bulan = today.getMonth().getDisplayName(TextStyle.FULL, indonesia); // Agustus
+        int tahun = today.getYear(); // 2025
 
-        // Tabel untuk tanda tangan
+        String tanggalFormatted = String.format("Jakarta, %s %d %s %d", hari, tanggal, bulan, tahun);
+
+        // Tabel tanda tangan
         PdfPTable signatureTable = new PdfPTable(2);
         signatureTable.setWidthPercentage(100);
-        signatureTable.setWidths(new int[]{50, 50}); // Bagi dua kolom sama rata
+        signatureTable.setWidths(new int[]{50, 50}); 
 
         // Cell kosong kiri
         PdfPCell leftCell = new PdfPCell();
         leftCell.setBorder(Rectangle.NO_BORDER);
-        leftCell.addElement(new Paragraph(" ", normalFont)); // Kosong
+        leftCell.addElement(new Paragraph(" ", normalFont));
 
         // Cell tanda tangan kanan
         PdfPCell rightCell = new PdfPCell();
         rightCell.setBorder(Rectangle.NO_BORDER);
         rightCell.setPadding(10);
 
-        Paragraph location = new Paragraph("Jakarta, Selasa 5 Agustus 2025", normalFont);
+        Paragraph location = new Paragraph(tanggalFormatted, normalFont);
         location.setAlignment(Element.ALIGN_CENTER);
         rightCell.addElement(location);
 
         Paragraph mengetahui = new Paragraph("Mengetahui", normalFont);
         mengetahui.setAlignment(Element.ALIGN_CENTER);
         mengetahui.setSpacingBefore(10);
-        mengetahui.setSpacingAfter(30); // Space untuk tanda tangan
+        mengetahui.setSpacingAfter(30);
         rightCell.addElement(mengetahui);
 
-        // Garis untuk tanda tangan
         Paragraph signatureLine = new Paragraph("(                                                    )", normalFont);
         signatureLine.setAlignment(Element.ALIGN_CENTER);
         rightCell.addElement(signatureLine);

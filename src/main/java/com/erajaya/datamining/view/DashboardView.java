@@ -265,7 +265,7 @@ public class DashboardView extends JFrame {
         
         controlPanel.add(calculateBtn);
         controlPanel.add(detailBtn);
-        controlPanel.add(exportBtn);
+//        controlPanel.add(exportBtn);
         
         // Results table
         String[] sawColumns = {"Rank", "Kode", "Nama Produk", "Harga", "Kualitas", "S.Cadang", "Skor SAW", "%"};
